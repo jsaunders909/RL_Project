@@ -22,7 +22,7 @@ class MsPacmanWrapper():
         
         if self.gray:
             frame = color.rgb2gray(frame)
-            
+        frame = resize(frame, (self.width, self.height))    
         return frame    
     
     def reset(self):
