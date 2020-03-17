@@ -205,7 +205,8 @@ class PrioritisedExperienceReplay():
         self.buffer_length = self.frames_per_state
         
         self.frames = np.zeros((capacity + self.buffer_length, self.width, self.height, 
-                                self.channels), dtype='int') 
+                                self.channels), dtype='uint8') # Everything
+        # should be in raneg 0-255 and normalised later
 
         self.tree = SumTree(np.zeros(capacity),e,eta)
         
@@ -247,6 +248,13 @@ class PrioritisedExperienceReplay():
         #print('Frames: %s to %s'%(self.buffer_length + i - (self.frames_per_state), self.buffer_length + i + 1))
         return self.frames[self.buffer_length + i - (self.frames_per_state): self.buffer_length + i + 1]
     
+    
+    def update(self, ids, TDs):
+        
+        ''' Updates the TD values for some experiences '''
+        for i,idx in enumerate(ids):
+            self.tree.update(idx,TDs[i])
+    
     def get_batch(self, batch_size):
         
         ''' Get a batch of experiences
@@ -262,8 +270,6 @@ class PrioritisedExperienceReplay():
             
         idx = self.tree.sample(batch_size)
         
-        
-        
         actions = self.actions[idx]
         rewards = self.rewards[idx]
         terminals = self.terminal[idx]
@@ -276,7 +282,7 @@ class PrioritisedExperienceReplay():
             
         states = np.array(states)
         new_states = np.array(new_states)
-        return (states, actions, rewards, new_states, terminals)
+        return (states, actions, rewards, new_states, terminals, idx)
         
     def debug_print(self):
         
@@ -294,15 +300,15 @@ class PrioritisedExperienceReplay():
         
 class ExperienceReplay():
 
-    def __init__(self,capacity, state_shape):
+    """ A memory buffer that stores previously experienced SARS sequences
 
-        """ A memory buffer that stores previously experienced SARS sequences
-        
-            (params):
-                capacity (int): The number of experiences to store this should 
-                    be a power of two for best efficiency 
-                frame_shape (tuple of ints): The shape of an individual state
-                (WIDTH, HEIGHT, CHANNELS, FRAMES/STATE) """
+    (params):
+        capacity (int): The number of experiences to store this should 
+            be a power of two for best efficiency 
+        frame_shape (tuple of ints): The shape of an individual state
+        (WIDTH, HEIGHT, CHANNELS, FRAMES/STATE) """
+    
+    def __init__(self,capacity, state_shape):
                     
         self.capacity = capacity            
 
@@ -323,7 +329,7 @@ class ExperienceReplay():
         self.buffer_length = self.frames_per_state
         
         self.frames = np.zeros((capacity + self.buffer_length, self.width, self.height, 
-                                self.channels), dtype='int') 
+                                self.channels), dtype='uint8') 
 
         
         self.actions = np.zeros(capacity)
@@ -362,6 +368,9 @@ class ExperienceReplay():
         #print('Frames: %s to %s'%(self.buffer_length + i - (self.frames_per_state), self.buffer_length + i + 1))
         return self.frames[self.buffer_length + i - (self.frames_per_state): self.buffer_length + i + 1]
     
+    def update_TD(self, ids, TDs):
+        pass
+    
     def get_batch(self, batch_size):
         
         ''' Get a batch of experiences
@@ -373,12 +382,16 @@ class ExperienceReplay():
             index 1 is a collection of actions taken from the corresponding state
             index 2 is the rewards for the actions
             index 3 is the new states arrived in by taking action a from state s
-            index 4 is if the new state is terminal '''
+            index 4 is if the new state is terminal
+            index 5 are the idicies '''
             
-        idx =random.randint(0,len(self.capacity))
+        idx = []
+        for i in range(batch_size):
+            idx.append(random.randint(0,self.capacity-1))
         actions = self.actions[idx]
         rewards = self.rewards[idx]
         terminals = self.terminal[idx]
+        
         states, new_states = [],[]
         
         for i in range(batch_size):
@@ -388,7 +401,7 @@ class ExperienceReplay():
             
         states = np.array(states)
         new_states = np.array(new_states)
-        return (states, actions, rewards, new_states, terminals)
+        return (states, actions, rewards, new_states, terminals, idx)
         
     def debug_print(self):
         
