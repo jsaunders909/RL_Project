@@ -23,11 +23,13 @@ class DQN():
         
         self.env = env
         self.memory = memory
-        self.create_network()
-        self.fill_memory()
+        
         self.epsilon = epsilon
         self.gamma = gamma
         self.learn_rate = learn_rate
+        
+        self.model = self.create_network()
+        self.fill_memory()
         
     def create_network(self):
         
@@ -57,10 +59,10 @@ class DQN():
         model.add(Dense(self.actions*64, activation = relu))
         model.add(Dense(self.actions, activation = linear))
         
-        model.compile(optimizer = 'adam', loss=mse)
+        model.compile(optimizer = Adam(learning_rate=self.learn_rate), loss=mse)
         model.summary()
         
-        self.model = model
+        return model
         
     def fill_memory(self):
         
@@ -93,24 +95,28 @@ class DQN():
         new_states = new_states.reshape((-1,self.width, self.height, self.fps*self.channels))
         
         # Predict Q values for states and future states
-        preds = self.model.predict(states)
-        next_preds = self.model.predict(new_states)
+        target = self.model.predict(states)
         
         # Calculate target Q values
-        target = preds
-        for i,Q_vals in enumerate(target):
+        
+        
+        for i, Q_vals in enumerate(target):
             Q_old = target[i][int(actions[i])]
             if terminals[i]:
                 Q_target = rewards[i]
             else:
-                best_future = np.max(next_preds[i])
+                
+                Q_future = self.model.predict(new_states[i].reshape(-1, self.width, 
+                                                         self.height,
+                                                         self.fps*self.channels))
+                best_future = np.max(Q_future)
                 # Update rule
                 Q_target = rewards[i] + self.gamma * (best_future)
-                
-            Q_new = Q_old + (self.learn_rate * (Q_target - Q_old))
-            target[i][int(actions[i])] = Q_new
+            
+            target[i][int(actions[i])] = Q_target
         # Train the model
         self.model.train_on_batch(states, target)
+        
     def select_action(self, state):
         
         ''' Select the best action from the current state '''
@@ -173,7 +179,7 @@ class DQN():
                     # Update the model
                     if frames % 4 == 0:
                         
-                        self.train_on_batch(256)
+                        self.train_on_batch(2**10)
                     
                     if done:
                         print('Episode: ',episode, ', Performance: ', performance, ', Frames: ', frames)
@@ -185,7 +191,7 @@ class DQN():
                 
 # Code is run from here
 if __name__ == '__main__':
-    env = BreakoutWrapper(100,100,True)
-    memory =  ExperienceReplay(2**12, (100,100,1,4))
+    env = BreakoutWrapper(85,85,True)
+    memory =  ExperienceReplay(2**16, (85,85,1,2))
     agent = DQN(env, memory, learn_rate=0.0001)
     agent.train(1000)
