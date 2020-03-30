@@ -219,7 +219,7 @@ class DDPG:
             
             self.Actor.actor_nn = load_model('a_'+load + '.h5')        
             self.Actor.target_actor_nn = load_model('at_'+load + '.h5')
-            self.Critic.critic_nn = load_model('c'+load + '.h5')            
+            self.Critic.critic_nn = load_model('c_'+load + '.h5')            
             self.Critic.target_critic_nn = load_model('ct_'+load + '.h5')
             print('* Models loaded successfully *')
                
@@ -227,7 +227,7 @@ class DDPG:
         # Initialise the buffer    
         self.buffer = ExperienceBuffer(self.buffer_cap, self.batch_size, self.sess)
 
-        #self.sess.run(tf.global_variables_initializer())        
+        self.sess.run(tf.global_variables_initializer())        
         
         
     def step(self, state, action, reward, state_prim, terminal):
@@ -408,6 +408,6 @@ load_weights = False
 agent = DDPG(state_size, action_size, a_up_limit, a_bot_limit, actor_lr, critic_lr, tau, gamma, buffer_cap, batch_size, load_weights)
 
 # Uncomment one
-#training(agent, train_episodes, max_steps, model_name)
-testing(agent)
+training(agent, train_episodes, max_steps, model_name)
+#testing(agent)
 
