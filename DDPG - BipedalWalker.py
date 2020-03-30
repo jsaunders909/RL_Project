@@ -239,10 +239,11 @@ class DDPG:
             batch = self.buffer.get_batch()
             self.fit(gamma, batch)
             
-    def act(self, state):
+    def act(self, state, noise):
         # Use actor to predic actions given the state, add noise, and clip to env action bounds
         a = self.Actor.actor_nn.predict(np.expand_dims(state, axis=0))[0]
-        a += self.noise.sample() 
+        if(noise == True):
+            a += self.noise.sample() 
         a = np.clip(a, self.a_bot_limit, self.a_up_limit)
         
         return a
@@ -314,7 +315,7 @@ def training(agent, train_episodes, max_steps, model_name):
 
         for i in range(max_steps):
             
-            action = agent.act(state)
+            action = agent.act(state, noise=True)
 
             state_prim, reward, terminal, _ = env.step(action)            
             agent.step(state, action, reward, state_prim, float(terminal))
@@ -367,7 +368,7 @@ def testing(agent):
     while terminal == False:    
 
         env.render()  
-        action = agent.act(state)   
+        action = agent.act(state, noise=False)   
         #print(action)        
         state, reward, terminal, info = env.step(action)
         rewards += reward
