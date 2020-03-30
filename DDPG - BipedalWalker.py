@@ -50,7 +50,7 @@ class PolicyActor:
         self.actor_nn, self.states = self.nn()
         self.target_actor_nn, _ = self.nn()
         
-        # The below used to compile and train target network wrt states and the critic gradients
+        # The below used to compile and train agent network wrt states and the critic gradients
         self.action_grad=tf.placeholder(tf.float32, [self.batch_size, self.action_size])        
         params_grad=tf.gradients(self.actor_nn.output, self.actor_nn.trainable_weights, -self.action_grad)                
         self.optimize=tf.train.AdamOptimizer(self.lr).apply_gradients(zip(params_grad, self.actor_nn.trainable_weights))        
