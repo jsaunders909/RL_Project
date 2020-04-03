@@ -39,7 +39,7 @@ class PolicyActor:
     def __init__(self, state_size, action_size, a_up_limit, batch_size, lr, tau, sess):  
         
         self.sess=sess
-        K.set_session(sess)
+        K.set_session(self.sess)
    
         self.state_size = state_size
         self.action_size = action_size
@@ -88,7 +88,7 @@ class ValueCritic:
     def __init__(self, state_size, action_size, a_up_limit, lr, tau, sess):
         
         self.sess=sess        
-        K.set_session(sess)        
+        K.set_session(self.sess)        
 
         self.state_size = state_size
         self.action_size = action_size
@@ -209,7 +209,8 @@ class DDPG:
         # Noise to be used with actions        
         self.noise = OUNoise(self.action_size)        
         # Start tf session
-        self.sess=tf.Session()        
+        self.sess=tf.Session() 
+        K.set_session(self.sess)
         # Load the actor and critic models (and their targets)
         self.Actor = PolicyActor(state_size, action_size, a_up_limit, batch_size, actor_lr, tau, self.sess)
         self.Critic = ValueCritic(state_size, action_size, a_up_limit, critic_lr, tau, self.sess)
