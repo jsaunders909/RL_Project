@@ -53,7 +53,8 @@ class PolicyActor:
         # The below used to compile and train agent network wrt states and the critic gradients
         self.action_grad=tf.placeholder(tf.float32, [self.batch_size, self.action_size])        
         params_grad=tf.gradients(self.actor_nn.output, self.actor_nn.trainable_weights, -self.action_grad)                
-        self.optimize=tf.train.AdamOptimizer(self.lr).apply_gradients(zip(params_grad, self.actor_nn.trainable_weights))        
+        self.optimize=tf.train.AdamOptimizer(self.lr).apply_gradients(zip(params_grad, self.actor_nn.trainable_weights))  
+        self.sess.run(tf.initialize_all_variables())
         
     def nn(self):
         # Actor nn
@@ -100,7 +101,8 @@ class ValueCritic:
         self.critic_nn, self.critic_states, self.critic_actions = self.nn()
         self.target_critic_nn, _, _ = self.nn()       
         # Holds instance to compute the tf gradients
-        self.q_gradients = tf.gradients(self.critic_nn.output, self.critic_actions)[0]        
+        self.q_gradients = tf.gradients(self.critic_nn.output, self.critic_actions)[0]  
+        self.sess.run(tf.initialize_all_variables())
 
     def nn(self):
         # Create nn for critics, (2 inputs, one for states other for actions, 3 dense layers 
@@ -218,17 +220,17 @@ class DDPG:
         # If string passed to load param, load the appropriate models (must be in same folder)
         if load != False:           
             
-            self.Actor.actor_nn = load_model('a_'+load + '.h5')        
-            self.Actor.target_actor_nn = load_model('at_'+load + '.h5')
-            self.Critic.critic_nn = load_model('c_'+load + '.h5')            
-            self.Critic.target_critic_nn = load_model('ct_'+load + '.h5')
+            self.Actor.actor_nn.load_weights('a_'+load + '.h5')        
+            self.Actor.target_actor_nn.load_weights('at_'+load + '.h5')
+            self.Critic.critic_nn.load_weights('c_'+load + '.h5')            
+            self.Critic.target_critic_nn.load_weights('ct_'+load + '.h5')
             print('* Models loaded successfully *')
                
              
         # Initialise the buffer    
         self.buffer = ExperienceBuffer(self.buffer_cap, self.batch_size, self.sess)
 
-        self.sess.run(tf.global_variables_initializer())        
+        #self.sess.run(tf.global_variables_initializer())        
         
         
     def step(self, state, action, reward, state_prim, terminal):
