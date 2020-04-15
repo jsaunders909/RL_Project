@@ -285,7 +285,7 @@ def training(agent, train_episodes, max_steps, model_name, update_delay):
     bestScore = 0
     scores, avr, queue_scores = [],[],[]
 
-    for episode in range(2000, train_episodes):
+    for episode in range(train_episodes):
 
         state = env.reset()
         score = 0
