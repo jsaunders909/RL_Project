@@ -1,3 +1,5 @@
+# pytorch version
+
 import torch
 import torch.nn as nn
 import torch.nn.functional as F
@@ -8,6 +10,8 @@ import matplotlib.pyplot as plt
 
 import gym
 
+
+# Hyperparmeters
 GAMMA = 0.99
 ACTOR_LR = 1e-4
 CRITIC_LR = 3e-4
@@ -17,11 +21,14 @@ TAU = 1e-3
 EXPLORATION_NOISE = 0.1
 NOISE_CLIP = 0.5
 
+# Imports
 from AC_torch import Actor, Critic
 
 
 
 class ReplayBuffer():
+    
+    """ A simple replay buffer  to store experiences """
     
     def __init__(self, capacity, batch_size, n_state, n_action):
         
@@ -37,14 +44,17 @@ class ReplayBuffer():
         
     def get_batch(self):
         
+        # Get the ids
         idx = [np.random.randint(0, len(self.memory)) for i in range(self.batch_size)]
         
+        # Sample from memory
         states = np.array([self.memory[i][0] for i in idx], dtype = 'float32').reshape(-1, self.n_state)
         actions = np.array([self.memory[i][1] for i in idx], dtype = 'float32').reshape(-1,self.n_action)
         rewards = np.array([self.memory[i][2] for i in idx], dtype = 'float32').reshape(-1,1)
         new_states = np.array([self.memory[i][3] for i in idx], dtype = 'float32').reshape(-1,self.n_state)
         terminals = np.array([self.memory[i][4] for i in idx], dtype = 'float32').reshape(-1,1)
         
+        # Convert to torch tensors at last minute
         states = torch.from_numpy(states).float()
         actions = torch.from_numpy(actions).float()
         rewards = torch.from_numpy(rewards).float()
@@ -57,6 +67,13 @@ class ReplayBuffer():
 class DDPG():
     
     def __init__(self, env, n_action, n_state, max_steps = 1000):
+        
+        """ The DDPG agent
+            (params):
+                env (environment-like): The environment following openai-esque structure
+                n_action (int): The dimensionality of the action space
+                n_state (int): The dimensionality of the state space
+                max_steps (int): The maximum number of steps the agent will take before ending the episode """
         
         self.env = env
         
@@ -74,12 +91,17 @@ class DDPG():
         
     def step(self, state, action, reward, new_state, done):
         
+        # Call each time a new experience is collected
+        
         # Add the experience to memory
         self.memory.add(state, action, reward, new_state, done)
         
         if len(self.memory.memory) > BATCH_SIZE:
             
+            # If we can sample a batch, do so
             batch = self.memory.get_batch()
+            
+            # Update models
             self.learn_from_batch(batch)
 
     def learn_from_batch(self, batch):
@@ -118,7 +140,8 @@ class DDPG():
         self.update_targets()
         
     def update_targets(self):
-
+        
+         # Polyak target updates
          for target_param, model_param in zip(self.actor_target.parameters(), self.actor.parameters()):
             target_param.data.copy_(TAU*model_param.data + (1.0-TAU)*target_param.data)        
          for target_param, model_param in zip(self.critic_target.parameters(), self.critic.parameters()):
@@ -129,6 +152,7 @@ class DDPG():
         state = torch.from_numpy(state).float()
         self.actor.eval()
         with torch.no_grad():
+            # We don't want this tracked by torches dynamic graph
             actions = self.actor(state)
         self.actor.train()
         actions = actions.numpy()
@@ -147,17 +171,20 @@ class DDPG():
         
         for i in range(num_episodes):
             
+            # Run the episode
             performance = 0
             state = self.env.reset()
             
             for j in range(self.max_steps):
                 
+                # For max number of steps
                 action = self.select_action(state)
                 new_state, reward, done, _ = self.env.step(action)
                 performance += reward
                 self.step(state, action, reward, new_state, done)
                 
                 if done:
+                    # If done, end the episode
                     break 
                 else:
                     state = new_state
@@ -187,6 +214,7 @@ class DDPG():
             state = self.env.reset()
             for j in range(self.max_steps):
                 
+                # We need to select the action without noise for the tests
                 action = self.select_action(state, False)
                 state, reward, done, _ = self.env.step(action)
                 self.env.render()
