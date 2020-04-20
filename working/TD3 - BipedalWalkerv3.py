@@ -403,5 +403,3 @@ agent = TD3(state_size, action_size, actor_lr, critic_lr, tau, gamma, l2_w_decay
 # Uncomment one
 #training(agent, train_episodes, max_steps, model_name, policy_net_update_delay)
 testing(agent)
-
-# solved at ep: 2224
