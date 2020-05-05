@@ -1,6 +1,6 @@
 # Twin Delayed Deep Deterministic Policy Gradient (TD3) for Bipedal Walker v3
 
-# Referred to the following for guidance:
+#   Refer to the following for guidance:
 #   https://arxiv.org/pdf/1802.09477.pdf 
 #   https://towardsdatascience.com/td3-learning-to-run-with-ai-40dfc512f93
 #   https://github.com/sweetice/Deep-reinforcement-learning-with-pytorch
@@ -25,7 +25,7 @@ from collections import deque
 #########################################################################################################
 # Actor and Critic classes
 
-# fan in init
+# Fan initialisation https://github.com/udacity/deep-reinforcement-learning
 def fan_in_init(layer):
     fan_in = layer.weight.data.size()[0]
     lim = 1. / np.sqrt(fan_in)
