@@ -1,5 +1,4 @@
-# pytorch version
-
+# External imports
 import torch
 import torch.nn as nn
 import torch.nn.functional as F
@@ -21,11 +20,11 @@ TAU = 1e-3
 EXPLORATION_NOISE = 0.1
 NOISE_CLIP = 0.5
 
-# Imports
+# Internal imports
 from AC_torch import Actor, Critic
 
 
-
+# Replay buffer
 class ReplayBuffer():
     
     """ A simple replay buffer  to store experiences """
@@ -141,7 +140,7 @@ class DDPG():
         
     def update_targets(self):
         
-         # Polyak target updates
+         # Polyak target updates, only way found at https://github.com/navneet-nmk/pytorch-rl/blob/master/train_ddpg.py
          for target_param, model_param in zip(self.actor_target.parameters(), self.actor.parameters()):
             target_param.data.copy_(TAU*model_param.data + (1.0-TAU)*target_param.data)        
          for target_param, model_param in zip(self.critic_target.parameters(), self.critic.parameters()):
@@ -152,7 +151,7 @@ class DDPG():
         state = torch.from_numpy(state).float()
         self.actor.eval()
         with torch.no_grad():
-            # We don't want this tracked by torches dynamic graph
+            # We don't want this tracked by torch's dynamic graph
             actions = self.actor(state)
         self.actor.train()
         actions = actions.numpy()
